@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SynapsePro Analytics</title>
+
+  <!-- Favicon Einbindung -->
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+
   <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -55,7 +60,7 @@
       color: #1e293b;
     }
 
-    /* KPI Grid ("Drei Beine") */
+    /* KPI Grid */
     .kpi-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -147,7 +152,6 @@
       margin-bottom: 1.5rem;
     }
 
-    /* Einheitliche Horizontale Charts */
     .horizontal-chart {
       display: flex;
       flex-direction: column;
@@ -187,13 +191,9 @@
     }
 
     /* Farbliche Differenzierung der Diagramme */
-    #role-chart .bar-fill {
-      background-color: var(--accent-color);
-    }
-
-    #theme-chart .bar-fill {
-      background-color: #8b5cf6;
-    }
+    #role-chart .bar-fill { background-color: var(--accent-color); }
+    #theme-chart .bar-fill { background-color: #8b5cf6; }
+    #source-chart .bar-fill { background-color: #f59e0b; }
 
     .chart-percent {
       font-size: 0.875rem;
@@ -202,7 +202,6 @@
       color: var(--text-muted);
     }
 
-    /* Status & Loading States */
     .status-container {
       display: flex;
       justify-content: center;
@@ -239,24 +238,19 @@
       <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">Live-Auswertung der Onboarding-Schritte</p>
     </header>
 
-    <!-- Globaler Ladezustand -->
     <div id="status-area" class="status-container">
       <div class="spinner" id="loading-spinner"></div>
       <p id="status-text" style="color: var(--text-muted); font-size: 0.95rem;">Analysedaten werden geladen...</p>
     </div>
 
-    <!-- Dashboard Content -->
     <main id="dashboard-content" class="hidden">
       
-      <!-- KPI Section ("Drei Beine") -->
+      <!-- KPI Section -->
       <section class="kpi-grid">
-        <!-- 1. Gesamt-Nutzer -->
         <div class="card kpi-card">
-          <span class="kpi-label">Nutzer</span>
+          <span class="kpi-label">Gesamt Nutzer</span>
           <span class="kpi-value" id="kpi-total">-</span>
         </div>
-
-        <!-- 2. Neue Nutzer (interaktiv) -->
         <div class="card kpi-card">
           <span class="kpi-label">Neue Nutzer</span>
           <span class="kpi-value" id="kpi-new-users">-</span>
@@ -266,32 +260,32 @@
             <button class="btn-time" data-hours="720">30 Tage</button>
           </div>
         </div>
-
-        <!-- 3. Beliebteste Rolle -->
         <div class="card kpi-card">
           <span class="kpi-label">Top Rolle</span>
           <span class="kpi-value" id="kpi-role" style="font-size: 1.75rem;">-</span>
         </div>
       </section>
 
-      <!-- Charts Section (3 Spalten) -->
+      <!-- Charts Section (4 Spalten) -->
       <section class="charts-grid">
-        <!-- Sprachverteilung -->
         <div class="card chart-card">
           <h2 class="chart-header">Sprachverteilung (lang)</h2>
           <div class="horizontal-chart" id="lang-chart"></div>
         </div>
 
-        <!-- Rollenverteilung -->
         <div class="card chart-card">
           <h2 class="chart-header">Rollenverteilung (role)</h2>
           <div class="horizontal-chart" id="role-chart"></div>
         </div>
 
-        <!-- Themenverteilung -->
         <div class="card chart-card">
-          <h2 class="chart-header">Ausgewähltes Thema (theme_number)</h2>
+          <h2 class="chart-header">Thema (theme_number)</h2>
           <div class="horizontal-chart" id="theme-chart"></div>
+        </div>
+
+        <div class="card chart-card">
+          <h2 class="chart-header">Herkunft (source)</h2>
+          <div class="horizontal-chart" id="source-chart"></div>
         </div>
       </section>
     </main>
@@ -303,9 +297,8 @@
 
     let supabaseInstance = null;
     let globalData = [];
-    let selectedHours = 24; // Standardzeitfenster
+    let selectedHours = 24;
 
-    // UI-Elemente
     const statusArea = document.getElementById("status-area");
     const spinner = document.getElementById("loading-spinner");
     const statusText = document.getElementById("status-text");
@@ -318,15 +311,10 @@
     const langChartContainer = document.getElementById("lang-chart");
     const roleChartContainer = document.getElementById("role-chart");
     const themeChartContainer = document.getElementById("theme-chart");
+    const sourceChartContainer = document.getElementById("source-chart");
 
-    // --- Zeitfenster-Filter Logik ---
     function parseDate(item, index, totalCount) {
-      // Falls Supabase ein 'created_at' liefert, wird dieses genutzt.
-      if (item.created_at) {
-        return new Date(item.created_at);
-      }
-      // Fallback-Logik: Falls kein Zeitstempel existiert, simulieren wir plausible Zeitabstände 
-      // auf Basis der IDs, damit die Filterberechnung funktionstüchtig bleibt.
+      if (item.created_at) return new Date(item.created_at);
       const now = Date.now();
       const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
       const ratio = index / Math.max(totalCount, 1);
@@ -336,16 +324,9 @@
     function calculateNewUsers(data, hours) {
       const now = new Date();
       const cutoff = new Date(now.getTime() - (hours * 60 * 60 * 1000));
-      
-      const filtered = data.filter((item, index) => {
-        const itemDate = parseDate(item, index, data.length);
-        return itemDate >= cutoff;
-      });
-
-      return filtered.length;
+      return data.filter((item, index) => parseDate(item, index, data.length) >= cutoff).length;
     }
 
-    // --- Datenaggregations-Hilfsfunktion ---
     function processDistribution(data, key, labelModifier = (val) => val) {
       const distribution = {};
       let totalValid = 0;
@@ -368,28 +349,27 @@
         .sort((a, b) => b.count - a.count);
     }
 
-    // --- Render-Prozesse ---
     function renderChartsAndKPIs() {
       if (globalData.length === 0) return;
 
-      // 1. KPI-Berechnungen
       const totalCount = globalData.length;
       const roleDistribution = processDistribution(globalData, "role");
       const langDistribution = processDistribution(globalData, "lang");
-      // Themen-Namen kosmetisch aufbereiten
       const themeDistribution = processDistribution(globalData, "theme_number", (val) => `Thema ${val}`);
+      
+      // ACHTUNG: Hier ggf. "source" in den Datenbankspaltennamen der Herkunft ändern
+      const sourceDistribution = processDistribution(globalData, "source");
 
       const topRole = roleDistribution[0] ? roleDistribution[0].name : "Keine";
 
-      // KPI Anzeige
       kpiTotal.textContent = totalCount.toLocaleString();
       kpiRole.textContent = topRole;
       kpiNewUsers.textContent = calculateNewUsers(globalData, selectedHours).toLocaleString();
 
-      // Charts rendern
       renderHorizontalChart(langChartContainer, langDistribution);
       renderHorizontalChart(roleChartContainer, roleDistribution);
       renderHorizontalChart(themeChartContainer, themeDistribution);
+      renderHorizontalChart(sourceChartContainer, sourceDistribution);
     }
 
     function renderHorizontalChart(container, dataset) {
@@ -399,7 +379,6 @@
         return;
       }
 
-      // Nur Top-8 Einträge darstellen für ein sauberes Interface
       dataset.slice(0, 8).forEach(item => {
         const row = document.createElement("div");
         row.className = "chart-row";
@@ -412,7 +391,6 @@
         `;
         container.appendChild(row);
 
-        // Sanfte CSS-Transition triggern
         setTimeout(() => {
           const fill = row.querySelector(".bar-fill");
           if (fill) fill.style.width = `${item.percentage}%`;
@@ -420,16 +398,32 @@
       });
     }
 
-    // --- API-Abfrage ---
     async function fetchDashboardData() {
       try {
-        const { data, error } = await supabaseInstance
-          .from("onboarding_events")
-          .select("*");
+        let allData = [];
+        let hasMore = true;
+        let start = 0;
+        const limit = 1000;
 
-        if (error) throw error;
+        // Pagination umgeht das 1000-Einträge-Limit von Supabase
+        while (hasMore) {
+          const { data, error } = await supabaseInstance
+            .from("onboarding_events")
+            .select("*")
+            .range(start, start + limit - 1);
 
-        globalData = data || [];
+          if (error) throw error;
+
+          allData = allData.concat(data);
+
+          if (data.length < limit) {
+            hasMore = false;
+          } else {
+            start += limit;
+          }
+        }
+
+        globalData = allData;
 
         if (globalData.length === 0) {
           spinner.classList.add("hidden");
@@ -452,32 +446,26 @@
       }
     }
 
-    // --- Realtime Subscription ---
     function setupRealtime() {
       supabaseInstance
         .channel("realtime-onboarding")
         .on(
           "postgres_changes",
           { event: "*", schema: "public", table: "onboarding_events" },
-          () => {
-            fetchDashboardData();
-          }
+          () => { fetchDashboardData(); }
         )
         .subscribe();
     }
 
-    // --- Event Listener für interaktive Zeitumschaltung ---
     document.querySelectorAll(".btn-time").forEach(btn => {
       btn.addEventListener("click", (e) => {
         document.querySelectorAll(".btn-time").forEach(b => b.classList.remove("active"));
         e.target.classList.add("active");
-        
         selectedHours = parseInt(e.target.getAttribute("data-hours"), 10);
         kpiNewUsers.textContent = calculateNewUsers(globalData, selectedHours).toLocaleString();
       });
     });
 
-    // --- Initialisierung ---
     function init() {
       try {
         supabaseInstance = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
