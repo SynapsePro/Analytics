@@ -501,6 +501,7 @@
     let debugStep = 0;
 
     function dbg(msg, isError) {
+      if (!debugLog) return; // Debug-Box entfernt? Dann still weiterlaufen.
       debugStep++;
       const line = document.createElement("div");
       if (isError) line.className = "dbg-err";
