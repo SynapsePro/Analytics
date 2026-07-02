@@ -413,10 +413,7 @@
   <div class="container">
 
     <!-- Sichtbares Debug-Protokoll (Ersatz für die Browser-Konsole) -->
-    <div id="debug-log">Debug-Protokoll:
-[0] HTML geladen. Warte auf JavaScript …</div>
-
-    <header class="reveal">
+      <header class="reveal">
       <div>
         <p class="header-eyebrow">Onboarding</p>
         <h1>SynapsePro Analytics</h1>
@@ -653,14 +650,14 @@
         timestampHint.classList.add("visible");
         if (missing === totalCount) {
           timestampHintText.innerHTML =
-            'Kein Eintrag hat ein <code>created_at</code>-Feld – „Neue Nutzer" zeigt daher 0. ' +
+            'Kein Eintrag hat ein <code>created_at</code>-Feld – „Neue Nutzer“ zeigt daher 0. ' +
             'Lege die Spalte in Supabase an: <code>ALTER TABLE onboarding_events ADD COLUMN created_at timestamptz DEFAULT now();</code>';
           kpiTotalSub.textContent = "";
           kpiNewSub.textContent = "Keine Timestamps vorhanden";
         } else {
           timestampHintText.textContent =
             missing.toLocaleString("de-DE") + " von " + totalCount.toLocaleString("de-DE") +
-            " Einträgen haben keinen Timestamp und werden bei „Neue Nutzer" nicht mitgezählt.";
+            " Einträgen haben keinen Timestamp und werden bei „Neue Nutzer“ nicht mitgezählt.";
           kpiTotalSub.textContent = "davon " + (totalCount - missing).toLocaleString("de-DE") + " mit Timestamp";
           kpiNewSub.textContent = "";
         }
