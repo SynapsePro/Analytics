@@ -645,6 +645,7 @@
 
     const SUPABASE_URL = "https://brsrxgwqncgibnvqjcuj.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJyc3J4Z3dxbmNnaWJudnFqY3VqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0NDQyNzcsImV4cCI6MjA5NTAyMDI3N30.pNosGgjiTLizTc_xChzzkP8kuQqNDtoe2YkXP6CN0Mo";
+    const HISTORICAL_USER_COUNT = 3000;
 
     let supabaseInstance = null;
     let globalData = [];
@@ -1058,7 +1059,8 @@
     function renderChartsAndKPIs() {
       if (globalData.length === 0) return;
 
-      const totalCount = globalData.length;
+      // Die ersten Nutzer vor Supabase nur in der Gesamtzahl berücksichtigen.
+      const totalCount = globalData.length + HISTORICAL_USER_COUNT;
       const roleDistribution = processDistribution(globalData, "role");
       const langDistribution = processDistribution(globalData, "lang");
       const themeDistribution = processDistribution(globalData, "theme_number", (val) => `Thema ${val}`);
@@ -1256,4 +1258,3 @@
   </script>
 </body>
 </html>
-
